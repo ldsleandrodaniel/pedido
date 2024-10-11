@@ -10,7 +10,7 @@ carrinho = []
 
 # Função para conectar ao banco de dados
 def conectar_banco():
-    conn = sqlite3.connect('F:\\EstoqueC#\\Controle de Estoque\\Controle de Estoque\\bin\\Debug\\estoque.db')
+    conn = sqlite3.connect('estoque.db')
     return conn
 
 # Função para carregar os dados dos produtos
