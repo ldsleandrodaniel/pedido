@@ -33,7 +33,7 @@ def pagina_produtos():
 
     with button_col:
         if st.button("Pesquisar"):
-         #  st.experimental_rerun()
+          
 
     # Carregar e exibir os produtos
     dados_produtos = carregar_dados(pesquisa)
