@@ -13,7 +13,7 @@ from datetime import datetime
 
 
 def conectar_banco():
-    conn = sqlite3.connect('F:\\EstoqueC#\\Controle de Estoque\\Controle de Estoque\\bin\\Debug\\estoque.db')
+    conn = sqlite3.connect('estoque.db')
     return conn
 
 def carregar_dados(pesquisa=""):
