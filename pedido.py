@@ -9,6 +9,7 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 from datetime import datetime
+import re
 
 
 
@@ -25,6 +26,18 @@ def carregar_dados(pesquisa=""):
     conn.close()
     return df
 
+
+def validar_email(email):
+    # Define o padrão de regex para validar o email
+    padrao = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+
+    # Usa a função match para verificar se o email corresponde ao padrão
+    if re.match(padrao, email):
+        return True
+    else:
+        return False
+
+
 def adicionar_ao_carrinho(pro_cod, pro_nome, quantidade, pro_valorvenda):
     if 'carrinho' not in st.session_state:
         st.session_state['carrinho'] = []
@@ -36,44 +49,6 @@ def adicionar_ao_carrinho(pro_cod, pro_nome, quantidade, pro_valorvenda):
         'quantidade': quantidade,
         'pro_valorvenda': pro_valorvenda
     })
-
-
-def home():
-    st.subheader("Selecione os Produtos")
-    pesquisa_col, button_col = st.columns([3, 1])
-    with pesquisa_col:
-        pesquisa = st.text_input("Pesquisa", "", key="pesquisa")
-
-    with button_col:
-        if st.button("Pesquisar"):
-            xx = 0
-
-    dados_produtos = carregar_dados(pesquisa)
-    for index, row in dados_produtos.iterrows():
-        col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 2, 2])  # Ajuste as colunas
-        with col1:
-            st.write(row['pro_nome'])
-        with col2:
-            st.write(f"R$ {row['pro_valorvenda']:.2f}")
-        with col3:
-            img_data = row['pro_foto']
-            if img_data:
-                img = Image.open(io.BytesIO(img_data))
-                img.thumbnail((100, 100))  # Miniatura
-                st.image(img)
-            else:
-                st.write("Sem imagem")
-        with col4:
-            quantidade = st.selectbox(
-                "Quantidade",
-                options=range(int(row['pro_qtde']) + 1),
-                key=f"quantidade_{index}",
-                index=1
-            )
-        with col5:
-            if st.button("Adicionar ao carrinho", key=f"add_{index}"):
-                adicionar_ao_carrinho(row['pro_cod'], row['pro_nome'], quantidade, row['pro_valorvenda'])
-                st.toast(f"Adicionado ao carrinho: {row['pro_nome']}")
 
 
 
@@ -120,13 +95,14 @@ def enviar_email(gmail_user, gmail_password, to_email, subject, body, filename=N
         st.toast(f"Falha ao enviar o e-mail: {e}")
 
 
-def gerar_corpo_email(nome, email, whatsapp):
+def gerar_corpo_email(nome, email, whatsapp, mensagem):
     if 'carrinho' not in st.session_state or len(st.session_state['carrinho']) == 0:
         return "Carrinho vazio!"
 
     corpo = (f"Nome: {nome}\n\n"
              f"E-mail: {email}\n\n"
-             f"WhatsApp: {whatsapp}\n\n\n"
+             f"WhatsApp: {whatsapp}\n\n"
+             f"Mensagem: {mensagem}\n\n\n"
              f"Resumo do Pedido:\n\n")
 
 
@@ -148,6 +124,46 @@ def gerar_numero_pedido():
     agora = datetime.now()
     numero_pedido = agora.strftime("%d%m%y%H%M")  # Formato: ddMMyyHHmm
     return numero_pedido
+
+def home():
+
+    st.subheader("Selecione os Produtos")
+    pesquisa_col, button_col = st.columns([3, 1])
+    with pesquisa_col:
+        pesquisa = st.text_input("Pesquisa", "", key="pesquisa")
+
+    with button_col:
+        if st.button("Pesquisar"):
+            xx = 0
+
+    dados_produtos = carregar_dados(pesquisa)
+    for index, row in dados_produtos.iterrows():
+        col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 2, 2])  # Ajuste as colunas
+        with col1:
+            st.write(row['pro_nome'])
+        with col2:
+            st.write(f"R$ {row['pro_valorvenda']:.2f}")
+        with col3:
+            img_data = row['pro_foto']
+            if img_data:
+                img = Image.open(io.BytesIO(img_data))
+                img.thumbnail((100, 100))  # Miniatura
+                st.image(img)
+            else:
+                st.write("Sem imagem")
+        with col4:
+            quantidade = st.selectbox(
+                "Quantidade",
+                options=range(100),
+                key=f"quantidade_{index}",
+                index=1
+            )
+        with col5:
+            if st.button("Adicionar ao carrinho", key=f"add_{index}"):
+                adicionar_ao_carrinho(row['pro_cod'], row['pro_nome'], quantidade, row['pro_valorvenda'])
+                st.toast(f"Adicionado ao carrinho: {row['pro_nome']}")
+
+
 
 def pag1():
     st.subheader("Confira os dados de seu pedido")
@@ -191,24 +207,34 @@ def pag2():
     nome = st.text_input("Nome")
     email = st.text_input("E-mail")
     whatsapp = st.text_input("WhatsApp")
+    mensagem = st.text_input("Mensagem")
 
     if st.button("Enviar"):
-        ped = gerar_numero_pedido()
-        corpo = gerar_corpo_email(nome, email, whatsapp)
-        gmail_user = 'fivestarshdw@gmail.com'
-        gmail_password = 'o w e l y t y g l c g s p j k x'
-        to_email = 'felipedssilva@hotmail.com'
+        if validar_email(email):
+            ped = gerar_numero_pedido()
+            corpo = gerar_corpo_email(nome, email, whatsapp, mensagem)
+            gmail_user = 'fivestarshdw@gmail.com'
+            gmail_password = 'o w e l y t y g l c g s p j k x'
+            to_email = 'felipedssilva@hotmail.com'
 
-        subject = 'pedido numero ' + ped
-        body = ''
-        filename = None  # Defina None se não quiser anexar arquivo
+            subject = 'pedido numero ' + ped
+            body = ''
+            filename = None
+            enviar_email(gmail_user, gmail_password, to_email, subject, corpo, filename)
 
-        # Chamando a função
-        enviar_email(gmail_user, gmail_password, to_email, subject, corpo, filename)
+            if validar_email(email):
+                # corpo = gerar_corpo_email(nome, email, whatsapp, mensagem)
+                gmail_user = 'fivestarshdw@gmail.com'
+                gmail_password = 'o w e l y t y g l c g s p j k x'
+                to_email = email
+                subject = 'recebemos seu pedido numero ' + ped
+                corpo = "Pedido recebido com sucesso, logo entraremos em contato "
+                enviar_email(gmail_user, gmail_password, to_email, subject, corpo, filename)
 
+        else:
+            st.toast("Entre um email valido")
 
 def main():
-
     Home = st.Page(home,title="Fazer Pedido")
     Pag1 = st.Page(pag1,title="Revisar Pedido")
     Pag2 = st.Page(pag2,title="Enviar Pedido")
